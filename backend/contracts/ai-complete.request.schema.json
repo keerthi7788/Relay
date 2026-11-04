@@ -1,0 +1,20 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "POST /v1/complete request",
+  "type": "object",
+  "required": ["prompt", "output_schema", "untrusted_values"],
+  "additionalProperties": false,
+  "properties": {
+    "prompt": { "type": "string", "minLength": 1, "maxLength": 200000 },
+    "output_schema": { "type": "object" },
+    "untrusted_values": { "type": "array", "items": { "type": "string" } },
+    "guardrails": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "flag_injection": { "type": "boolean" },
+        "strip_links": { "type": "boolean" }
+      }
+    }
+  }
+}

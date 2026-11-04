@@ -1,0 +1,57 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "POST /v1/complete response, on success and on failure",
+  "type": "object",
+  "required": ["attempts", "flags", "tokens"],
+  "additionalProperties": false,
+  "properties": {
+    "output": { "type": "object" },
+    "model": { "type": "string" },
+    "error": {
+      "type": "object",
+      "required": ["code", "message"],
+      "additionalProperties": false,
+      "properties": {
+        "code": { "type": "string" },
+        "message": { "type": "string" }
+      }
+    },
+    "attempts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["at", "outcome", "prompt_tokens", "completion_tokens"],
+        "additionalProperties": false,
+        "properties": {
+          "at": { "type": "string" },
+          "outcome": { "enum": ["succeeded", "failed"] },
+          "raw": { "type": "string" },
+          "error": { "type": "string" },
+          "prompt_tokens": { "type": "integer" },
+          "completion_tokens": { "type": "integer" }
+        }
+      }
+    },
+    "flags": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["type", "detail"],
+        "additionalProperties": false,
+        "properties": {
+          "type": { "type": "string" },
+          "detail": { "type": "string" }
+        }
+      }
+    },
+    "tokens": {
+      "type": "object",
+      "required": ["prompt", "completion"],
+      "additionalProperties": false,
+      "properties": {
+        "prompt": { "type": "integer" },
+        "completion": { "type": "integer" }
+      }
+    }
+  }
+}
