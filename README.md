@@ -19,6 +19,7 @@ flowchart LR
 
 | Folder | Contents |
 |---|---|
+| `docker-compose.yml` | Every service; see [Setup](#setup) |
 | `frontend/` | React console |
 | `backend/src/` | JavaScript: Express API and the engine |
 | `backend/ai/` | Python: AI service, with no database access |
@@ -39,17 +40,29 @@ Each API follows the same path, and each layer only calls the one below it.
 
 ## Setup
 
-Requires Node.js 22+, Python 3.10+ and Docker.
-
-Install Node.js with [nvm](https://github.com/nvm-sh/nvm), then `nvm install` in this folder reads the version from `.nvmrc`.
+Relay always runs in Docker. You need Docker with Compose, `make` and `openssl`. The smoke test and drills also use `curl` and `python3`.
 
 ```bash
-make install    # also creates .env with a generated sign-in password; then set OPENROUTER_API_KEY
-make run      # Postgres, mock world, AI service, API, worker and console; opens the console in your browser
-make kill
+make run     # the first run creates .env and asks for OPENROUTER_API_KEY; run it again after adding the key
+make status
+make logs
+make kill    # stops every container; data is kept
 ```
 
-Sign in with `ADMIN_EMAIL` and `ADMIN_PASSWORD` from `.env`. Use `make run OPEN_BROWSER=no` to skip the browser. Run `make help` for every command. The API applies migrations and loads the seed workflows at startup. Logs are in `.run/`.
+`make run` builds the images, starts every service, waits until they're healthy and opens the console at http://localhost:5173. Sign in with `ADMIN_EMAIL` and `ADMIN_PASSWORD` from `.env`. Use `make run OPEN_BROWSER=no` to skip the browser, and `make help` for every command. The API applies migrations and loads the seed workflows at startup.
+
+If you'd rather not use `make`, copy `.env.example` to `.env`, fill in `JWT_SECRET`, `ADMIN_PASSWORD` and `OPENROUTER_API_KEY`, then run `docker compose up --build`.
+
+| Service | Runs | Host port |
+|---|---|---|
+| `console` | React build served by nginx, which proxies `/api` to the API | 5173 |
+| `api` | Express API | 8080 |
+| `worker` | Engine and scheduler | None |
+| `ai` | Python AI service | 8090 |
+| `mock-world` | The pack's mock external system | 9210 |
+| `postgres` | State and job queue, in the `relay-postgres` volume | 5544 |
+
+Ports are published on `127.0.0.1` only. The worker shares the mock world's network because the seed workflows call `http://localhost:9210`, and the pack stays unchanged.
 
 If Docker can't connect, your active context may be wrong. The Makefile uses the `default` context; override it with `make run DOCKER_CONTEXT=<name>`.
 
@@ -57,10 +70,10 @@ If Docker can't connect, your active context may be wrong. The Makefile uses the
 
 | Command | What it checks | Needs |
 |---|---|---|
-| `make test` | Lint and automated tests for the backend, AI service and frontend, with fakes for external services | Postgres |
+| `make test` | Lint and automated tests in containers, with fakes for external services | `make run` |
 | `make smoke` | The pack's contract smoke test | `make run` |
 | `make test-apis` | Every API live, including real OpenRouter calls | `make run` |
-| `make drill` | `kill -9` during a delay, resume, duplication check | `make run` |
+| `make drill` | Worker container killed with SIGKILL during a delay, resume, duplication check | `make run` |
 | `make crash-drill` | Worker dies after a side effect, before saving it, then resumes | `make run` |
 | `make test-all` | All of the above from a clean start | Nothing running |
 
