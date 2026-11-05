@@ -565,7 +565,7 @@ relay/
 │   └── package.json
 ├── frontend/               React + Vite
 ├── docs/                   verification report
-├── docker-compose.yml      Postgres only
+├── docker-compose.yml      every service
 └── README.md
 ```
 

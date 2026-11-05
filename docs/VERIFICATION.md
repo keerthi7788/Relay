@@ -2,7 +2,7 @@
 
 Date: 2026-11-05. Scope: backend and console.
 
-Everything here ran with the application calling real OpenRouter (`openai/gpt-4o-mini`), against real Postgres, with the API, worker, AI service and mock world as separate processes. The mock world is the external system the case study requires for side effects.
+Everything here ran with the application calling real OpenRouter (`openai/gpt-4o-mini`), against real Postgres, with the console, API, worker, AI service, mock world and Postgres as separate Docker containers, started by `make run`. The mock world is the external system the case study requires for side effects.
 
 ## Summary
 
@@ -16,7 +16,7 @@ Everything here ran with the application calling real OpenRouter (`openai/gpt-4o
 | Runaway workflow | Stops at the cap | **Stopped at 12 steps** |
 | Live API tests with real OpenRouter (`make test-apis`) | Pass | **36 passed** |
 | `make test-all` | Pass | **Passed** |
-| Backend JavaScript tests | Pass | **146 passed** |
+| Backend JavaScript tests | Pass | **155 passed** |
 | Frontend tests | Pass | **11 passed** |
 | Console tested in Chrome against the live system, with real OpenRouter | Pass | **35 checks passed**, no browser errors |
 | Python tests | Pass | **33 passed** |
@@ -46,7 +46,6 @@ Each of these failed on the earlier code and now behaves correctly on the runnin
 | Null byte in input or URL | 500 | 400 |
 | Webhook sent as `text/plain` | 202 with empty input | 415 |
 | Invalid URL, or GET with a body | Retried | Fails at attempt 1 |
-| Second `make run` | Orphaned services | Refused with a clear message |
 | Webhook using the old `********` mask | Accepted | 401; secrets are now stored as hashes |
 | Bad percent-encoding, unknown charset or encoding | 500 | 400 or 415 |
 | AI output in `notify.to` | Published | 422 `ai_output_in_control_param` |

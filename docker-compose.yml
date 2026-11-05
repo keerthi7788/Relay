@@ -1,3 +1,7 @@
+x-app-env: &app-env
+  DATABASE_URL: postgres://relay:relay@postgres:5432/relay
+  AI_SERVICE_URL: http://ai:8090
+
 services:
   postgres:
     image: postgres:16-alpine
@@ -14,6 +18,73 @@ services:
       interval: 2s
       timeout: 2s
       retries: 20
+
+  mock-world:
+    image: python:3.12-alpine
+    command: ["python", "/scripts/mock_world.py", "--port", "9210"]
+    volumes:
+      - ./backend/pack/scripts:/scripts:ro
+    ports:
+      - "127.0.0.1:9210:9210"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request as r; r.urlopen('http://localhost:9210/health')"]
+      interval: 2s
+      timeout: 2s
+      retries: 20
+
+  ai:
+    build:
+      context: ./backend
+      dockerfile: ai/Dockerfile
+    env_file: .env
+    ports:
+      - "127.0.0.1:8090:8090"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request as r; r.urlopen('http://localhost:8090/health')"]
+      interval: 2s
+      timeout: 2s
+      retries: 30
+
+  api:
+    build: ./backend
+    env_file: .env
+    environment: *app-env
+    ports:
+      - "127.0.0.1:8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:8080/ready').then((r) => process.exit(r.ok ? 0 : 1), () => process.exit(1))"]
+      interval: 2s
+      timeout: 2s
+      retries: 30
+
+  # Shares the mock world's network, because the seed workflows call http://localhost:9210.
+  worker:
+    build: ./backend
+    command: ["node", "src/worker.js"]
+    env_file: .env
+    environment:
+      <<: *app-env
+      WORKER_CRASH_AFTER_NODE: ${WORKER_CRASH_AFTER_NODE:-}
+    network_mode: service:mock-world
+    stop_grace_period: 90s
+    depends_on:
+      api:
+        condition: service_healthy
+      ai:
+        condition: service_healthy
+      mock-world:
+        condition: service_healthy
+
+  console:
+    build: ./frontend
+    ports:
+      - "127.0.0.1:5173:80"
+    depends_on:
+      api:
+        condition: service_healthy
 
 volumes:
   relay-postgres:

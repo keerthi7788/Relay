@@ -1,9 +1,43 @@
+# Dependencies
 node_modules/
-dist/
 .venv/
+venv/
+
+# Build output
+dist/
+build/
+*.tsbuildinfo
+.vite/
+*.egg-info/
+
+# Python caches
 __pycache__/
+*.py[cod]
 .pytest_cache/
 .ruff_cache/
+.mypy_cache/
+
+# Test coverage
+coverage/
+htmlcov/
+.coverage
+.coverage.*
+
+# Secrets
 .env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Logs and local runtime files
 *.log
+*.pid
 .run/
+
+# Editors and OS
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
